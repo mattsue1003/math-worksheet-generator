@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>算術紙本產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style id="pagesize">@page{size:A4 portrait;margin:0}</style>
+<style>
+:root{
+  --ink:#12343B;--teal:#028090;--orange:#E8552D;--amber:#F4A93C;
+  --bg:#EDF5F4;--panel:#FFFFFF;--line:#D3E2E1;--text:#12343B;--muted:#587076;--chip:#F3F8F8;--soft:#E3F1F0;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0E2125;--panel:#15303A;--line:#2A4952;--text:#E5F0EF;--muted:#9BB6BA;--chip:#1B3A44;--soft:#1B3F46}
+}
+:root[data-theme="dark"]{--bg:#0E2125;--panel:#15303A;--line:#2A4952;--text:#E5F0EF;--muted:#9BB6BA;--chip:#1B3A44;--soft:#1B3F46}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+/* ---------- top ---------- */
+.top{max-width:1440px;margin:0 auto;padding:22px 20px 6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;gap:5px}
+.logo i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;font:900 22px/1 Nunito,sans-serif;font-style:normal}
+.logo i:nth-child(1){background:var(--orange);transform:rotate(-6deg)}
+.logo i:nth-child(2){background:var(--amber);transform:translateY(4px)}
+.logo i:nth-child(3){background:var(--teal);transform:rotate(5deg)}
+.logo i:nth-child(4){background:var(--ink);transform:translateY(-3px)}
+:root[data-theme="dark"] .logo i:nth-child(4){background:#3C6670}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo i:nth-child(4){background:#3C6670}}
+.top h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.03em}
+.top p{margin:2px 0 0;color:var(--muted);font-size:14px}
+
+/* ---------- layout ---------- */
+.app{max-width:1440px;margin:0 auto;padding:12px 20px 40px;display:grid;grid-template-columns:400px minmax(0,1fr);gap:22px;align-items:start}
+.ui{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column}
+.ui-body{padding:16px 18px 8px}
+@media (max-width:920px){.app{grid-template-columns:minmax(0,1fr);padding:10px 12px 40px}.ui{position:static;max-height:none}}
+
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mode button{min-width:0;border:2px solid var(--line);background:var(--chip);border-radius:14px;padding:11px 12px;text-align:left;cursor:pointer}
+.mode button b{display:block;font-size:17px;font-weight:900}
+.mode button span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.mode button[aria-pressed="true"]{border-color:var(--teal);background:var(--soft)}
+.mode button[aria-pressed="true"] b{color:var(--teal)}
+
+fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:14px 0 6px}
+legend{font-weight:900;font-size:15px;padding:0 8px 0 0;color:var(--teal)}
+.row{margin:10px 0 12px}
+.lb{display:block;font-size:13.5px;font-weight:700;margin-bottom:6px}
+.chips,.seg{display:flex;flex-wrap:wrap;gap:6px}
+.chips button,.seg button{border:1.5px solid var(--line);background:var(--chip);border-radius:999px;padding:7px 13px;font-size:14.5px;cursor:pointer;font-weight:500}
+.chips button[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.seg.lv button{width:44px;padding:7px 0;font:800 16px Nunito,sans-serif}
+.lvdesc{list-style:none;margin:8px 0 0;padding:10px 12px;background:var(--chip);border-radius:10px;font-size:13.5px;line-height:1.75}
+.lvdesc b{display:inline-block;min-width:3.2em;color:var(--teal)}
+.lvdesc code{font:700 14px Nunito,sans-serif;background:none;color:var(--orange);margin-left:4px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:6px 0;cursor:pointer}
+.checks input{width:18px;height:18px;margin-top:2px;accent-color:var(--teal)}
+.hint{font-size:12.5px;color:var(--muted);margin:6px 0 0;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--chip);border-radius:10px;padding:8px 10px;font-size:14.5px}
+.font-row{display:flex;align-items:center;gap:10px}
+.font-row input[type=range]{flex:1;accent-color:var(--teal)}
+.font-row output{font:800 16px Nunito,sans-serif;min-width:3.4em;text-align:right}
+.tip{background:#FFF4E2;color:#6B4A12;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;margin:8px 0 4px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tip{background:#3B2F18;color:#F4D9A6}}
+:root[data-theme="dark"] .tip{background:#3B2F18;color:#F4D9A6}
+.hide{display:none!important}
+
+.actions{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:12px 18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;border-radius:0 0 18px 18px}
+.actions button{border:0;border-radius:12px;padding:11px 6px;font-weight:900;font-size:15px;cursor:pointer}
+.b-re{background:var(--chip);border:1.5px solid var(--line)!important}
+.b-pr{background:var(--teal);color:#fff}
+.b-pdf{background:var(--orange);color:#fff}
+.actions button:disabled{opacity:.55;cursor:wait}
+
+/* ---------- preview ---------- */
+.pvhead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin:2px 0 14px}
+.pvhead strong{font-size:18px;font-weight:900}
+.pvhead span{color:var(--muted);font-size:14px}
+.warn{color:var(--orange)!important;font-weight:700}
+#pages{display:flex;flex-wrap:wrap;gap:26px 22px;align-items:flex-start}
+figure{margin:0}
+figcaption{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:700}
+.pv{overflow:hidden;border-radius:4px;box-shadow:0 1px 2px rgba(18,52,59,.12),0 8px 24px rgba(18,52,59,.10);background:#fff}
+.pv>.page{transform-origin:top left}
+.pv.a4{width:calc(793.7px*var(--s4,.6));height:calc(1122.5px*var(--s4,.6))}
+.pv.a4>.page{transform:scale(var(--s4,.6))}
+.pv.a5{width:calc(559.4px*var(--s5,.6));height:calc(793.7px*var(--s5,.6))}
+.pv.a5>.page{transform:scale(var(--s5,.6))}
+#print{display:none}
+#print.exp{display:block;position:absolute;left:0;top:0;z-index:-5}
+.busy{position:fixed;inset:0;background:rgba(14,33,37,.82);color:#fff;display:none;place-items:center;z-index:50;font-size:18px;font-weight:700;text-align:center}
+.busy.on{display:grid}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:60}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+/* ================= PRINT PAGES ================= */
+.page{position:relative;background:#fff;color:#12343B;overflow:hidden;box-sizing:border-box;font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page.a4{width:210mm;height:297mm}
+.page.a5{width:148mm;height:210mm}
+.sheet-l{width:297mm;height:210mm;display:flex;background:#fff;overflow:hidden}
+.sheet-l>.page{flex:none}
+.sheet-l>.page:first-child{border-right:.6pt dashed #CFDCDC}
+.fd{display:inline-flex;align-items:flex-end;gap:4pt;white-space:nowrap}
+.fd b{font-weight:700}
+.fd i{font-style:normal;display:inline-block;border-bottom:1pt solid #12343B;height:1.35em;text-align:center;font-weight:500;line-height:1.35em}
+.mk{display:flex;gap:4pt}
+.mk i{width:19pt;height:19pt;border-radius:5pt;color:#fff;display:grid;place-items:center;font:900 13pt/1 Nunito,sans-serif;font-style:normal}
+
+/* single sheet */
+.sheet{padding:34pt 40pt}
+.sh-h{height:96pt;border-bottom:1.6pt solid #12343B;display:flex;flex-direction:column;justify-content:space-between;padding-bottom:9pt}
+.sh-top{display:flex;justify-content:space-between;align-items:center}
+.sh-top h1{margin:0;font-size:25pt;font-weight:900;letter-spacing:.04em;line-height:1.2}
+.sh-f{display:flex;gap:13pt;font-size:13pt}
+.pf{height:24pt;display:flex;justify-content:space-between;align-items:flex-end;font-size:9.5pt;color:#587076}
+
+/* problems */
+.grid{display:flex;flex-direction:column}
+.grow{display:grid;min-height:0}
+.it{display:flex;align-items:flex-start;padding:.32em .1em 0 0;min-width:0;overflow:hidden}
+.it.h{align-items:center;padding-top:0}
+.no{flex:none;width:2.1em;height:2.1em;font-size:.42em;border:1.2pt solid #028090;color:#028090;border-radius:50%;display:grid;place-items:center;font-family:Nunito,sans-serif;font-weight:800;margin-right:.45em;line-height:1}
+.it.v .no{margin-top:.15em}
+.hz{display:flex;align-items:center;gap:.24em;font-family:Nunito,"Noto Sans TC",sans-serif;font-weight:700;white-space:nowrap;line-height:1}
+.sy{color:#028090}
+.hz .eq{color:#12343B}
+.bx{display:inline-block;height:1.3em;border:1.3pt solid #86A7AC;border-radius:.16em;box-sizing:border-box;flex:none}
+.vt{font-family:Nunito,sans-serif;font-weight:700;line-height:1}
+.vr{display:flex}
+.c{width:.78em;height:1.28em;display:grid;place-items:center;flex:none;box-sizing:border-box}
+.c.bx2{border:1pt dashed #A7C0C3}
+.c.bx2.g{border-color:#D6E3E4}
+.vl{height:0;border-top:1.6pt solid #12343B;margin:.1em 0 .12em}
+.vl.thin{border-top-width:1pt;border-top-color:#86A7AC}
+.paren{width:.34em;height:1.28em;box-sizing:border-box;border-right:1.6pt solid #12343B;border-radius:0 .6em .6em 0/0 50% 50% 0;flex:none}
+.pr-sp{width:.34em;flex:none}
+.dv{display:flex;border-top:1.6pt solid #12343B}
+
+/* booklet: day page */
+.day.a5{padding:24pt 26pt}
+.day.a4{padding:34pt 40pt}
+.dh{height:92pt;border-bottom:1.6pt solid #12343B;display:flex;flex-direction:column;justify-content:space-between;padding-bottom:8pt}
+.dh-top{display:flex;align-items:center;gap:8pt}
+.dwk{font-size:11pt;color:#587076;font-weight:700}
+.dnum{background:#028090;color:#fff;font-weight:900;font-size:15pt;padding:2pt 11pt 3pt;border-radius:20pt;line-height:1.3}
+.ddate{font-size:15pt;font-weight:700}
+.dop{margin-left:auto;font-size:10.5pt;color:#E8552D;font-weight:700;border:1.2pt solid #E8552D;border-radius:5pt;padding:1pt 6pt;white-space:nowrap}
+.dh-rec{display:flex;gap:11pt;font-size:12pt;flex-wrap:nowrap}
+.df{height:58pt;display:flex;flex-direction:column;justify-content:flex-end;gap:7pt;font-size:11.5pt}
+.feel{display:flex;gap:11pt;align-items:center;border-top:1pt solid #D3E2E1;padding-top:8pt;white-space:nowrap}
+.feel b{font-weight:700;margin-right:2pt}
+.ck{width:1em;height:1em;border:1.2pt solid #12343B;border-radius:50%;display:inline-block;vertical-align:-.15em;margin-right:3pt}
+.df-b{display:flex;justify-content:space-between;align-items:flex-end}
+.df-b .pg{font-size:9.5pt;color:#587076}
+
+/* booklet: other pages (em-based) */
+.book{font-size:10pt}
+.book.a4{font-size:13.6pt}
+.pno{position:absolute;left:0;right:0;bottom:1.6em;text-align:center;font-size:.95em;color:#587076}
+.bt{font-size:2.2em;font-weight:900;margin:0 0 .25em;letter-spacing:.04em}
+.bt-bar{width:3.2em;height:.42em;border-radius:1em;background:#F4A93C;margin:0 0 1.2em}
+.inner{position:absolute;left:2.6em;right:2.6em;top:2.8em}
+
+.cover .s{position:absolute;display:grid;place-items:center;color:#fff;font-family:Nunito,sans-serif;font-weight:900;line-height:1}
+.cover .s1{width:13em;height:13em;border-radius:50%;background:#E8552D;top:-3.5em;right:-3.5em;font-size:1em}
+.cover .s1 span{font-size:7em;transform:translate(-.12em,.08em)}
+.cover .s2{width:6.4em;height:6.4em;border-radius:1.4em;background:#F4A93C;top:8.2em;left:-1.6em;transform:rotate(-12deg)}
+.cover .s2 span{font-size:4.4em}
+.cover .s3{width:5em;height:5em;border-radius:50%;background:#028090;top:12em;right:6.4em}
+.cover .s3 span{font-size:3.4em}
+.cover .s4{width:3.2em;height:3.2em;border-radius:.8em;background:#12343B;top:3.4em;left:8.6em;transform:rotate(10deg)}
+.cover .s4 span{font-size:2.2em}
+.cover .s5{width:9em;height:9em;border-radius:50%;border:1.1em solid #E3F1F0;bottom:-3.5em;left:-3em}
+.cv-main{position:absolute;left:2.8em;right:2.8em;top:22.5em}
+.cv-week{display:inline-block;background:#028090;color:#fff;font-weight:900;font-size:1.6em;padding:.2em .9em .25em;border-radius:2em}
+.cv-title{font-size:4.3em;font-weight:900;margin:.25em 0 .12em;line-height:1.15;letter-spacing:.03em}
+.cv-sub{font-size:1.45em;color:#587076;font-weight:500}
+.cv-fields{position:absolute;left:1.93em;right:1.93em;top:29.6em;display:flex;flex-direction:column;gap:1em;font-size:1.45em}
+.cv-fields .fd i{flex:1}
+.cv-fields .fd{display:flex}
+.cv-foot{position:absolute;left:0;right:0;bottom:2.2em;text-align:center;font-size:1.1em;color:#587076;font-weight:500}
+
+.steps{list-style:none;margin:0;padding:0;counter-reset:st}
+.steps li{counter-increment:st;position:relative;padding-left:2em;font-size:1.6em;line-height:1.5;margin:0 0 .55em}
+.steps li::before{content:counter(st);position:absolute;left:0;top:.1em;width:1.5em;height:1.5em;border-radius:50%;background:#028090;color:#fff;font:800 .85em/1.5em Nunito,sans-serif;text-align:center}
+.about{margin-top:1.2em;background:#EAF4F4;border-radius:.9em;padding:1em 1.2em;font-size:1.25em;line-height:1.7}
+.about h3{margin:0 0 .3em;font-size:1.12em;color:#028090}
+.about p{margin:0}
+
+.meta{font-size:1.25em;margin:0 0 .9em;display:flex;gap:1.2em;flex-wrap:wrap}
+.rec{width:100%;border-collapse:collapse;font-size:1.18em}
+.rec th{background:#12343B;color:#fff;font-weight:700;padding:.45em .2em;font-size:.92em}
+.rec td{border-bottom:1pt solid #CFDCDC;text-align:center;height:3em;padding:0 .2em}
+.rec td.l{text-align:left}
+.rec .box{display:inline-block;width:1.1em;height:1.1em;border:1.2pt solid #12343B;border-radius:.2em;vertical-align:middle}
+.rec tr:nth-child(even) td{background:#F5FAFA}
+.rnote{font-size:1.15em;color:#587076;margin-top:1em;line-height:1.6}
+
+.ans.a5{padding:24pt 26pt}
+.ans.a4{padding:34pt 40pt}
+.ans h2{font-size:17pt;margin:0;font-weight:900}
+.ans .sub{font-size:10pt;color:#587076;margin:2pt 0 12pt}
+.ablk{margin-bottom:10pt}
+.ablk h4{margin:0 0 4pt;font-size:11.5pt;color:#028090;font-weight:900}
+.agrid{display:grid;font-size:11.5pt;font-family:Nunito,"Noto Sans TC",sans-serif;font-weight:700}
+.agrid span{height:18pt;display:flex;align-items:center;gap:5pt;white-space:nowrap}
+.agrid em{font-style:normal;color:#86A7AC;font-size:9pt;min-width:1.6em;text-align:right}
+
+.lines{display:flex;flex-direction:column}
+.lines div{height:2.6em;border-bottom:1pt solid #CFDCDC}
+
+.back .badge{width:8em;height:8em;border-radius:50%;background:#F4A93C;color:#fff;display:grid;place-items:center;text-align:center;font-weight:900;font-size:1.5em;line-height:1.25;margin:2.6em auto 1em;transform:rotate(-8deg)}
+.back h2{text-align:center;font-size:2.2em;font-weight:900;margin:.3em 0 .2em}
+.back .lead{text-align:center;font-size:1.35em;color:#587076;margin:0 0 1.6em}
+.msg{border:1.4pt solid #028090;border-radius:1em;padding:1em 1.2em}
+.msg b{color:#028090;font-size:1.3em}
+
+/* ---------- print ---------- */
+@media print{
+  html,body{background:#fff!important}
+  :root{padding:0!important}
+  body>*:not(#print){display:none!important}
+  #print{display:block!important;position:static!important}
+  .pp{break-after:page;page-break-after:always;overflow:hidden}
+  .pp:last-child{break-after:auto;page-break-after:auto}
+  .pp>.page.a4{height:296.5mm}
+  .pp>.sheet-l{height:209.5mm}
+  .pp>.sheet-l>.page{height:209.5mm}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="logo" aria-hidden="true"><i>+</i><i>−</i><i>×</i><i>÷</i></div>
+  <div>
+    <h1>算術紙本產生器</h1>
+    <p>調好題目與字體，產生單張練習或一週一冊的動腦手冊，直接列印。</p>
+  </div>
+</header>
+
+<main class="app">
+  <aside class="ui" aria-label="設定">
+    <div class="ui-body">
+      <div class="mode" role="group" aria-label="產生方式">
+        <button data-mode="book" aria-pressed="true"><b>動腦手冊</b><span>以週為單位，一天一頁，帶回家練習</span></button>
+        <button data-mode="sheet" aria-pressed="false"><b>單張練習</b><span>一次印多張，每張題目都不同</span></button>
+      </div>
+
+      <fieldset>
+        <legend>題目設定</legend>
+        <div class="row">
+          <span class="lb">運算（可複選）</span>
+          <div class="chips" id="ops">
+            <button data-op="+" aria-pressed="true">＋ 加法</button>
+            <button data-op="−" aria-pressed="true">− 減法</button>
+            <button data-op="×" aria-pressed="false">× 乘法</button>
+            <button data-op="÷" aria-pressed="false">÷ 除法</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lb" id="lvlabel">難易度</span>
+          <div class="seg lv" data-set="level" data-num role="group" aria-labelledby="lvlabel">
+            <button data-val="1">1</button><button data-val="2">2</button><button data-val="3">3</button><button data-val="4">4</button><button data-val="5">5</button>
+          </div>
+          <ul class="lvdesc" id="lvdesc"></ul>
+        </div>
+        <div class="row">
+          <span class="lb">書寫方式</span>
+          <div class="seg" data-set="format">
+            <button data-val="h">橫式</button><button data-val="v">直式</button><button data-val="mix">橫直混合</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lb">題型</span>
+          <div class="seg" data-set="blank">
+            <button data-val="ans">求答案</button><button data-val="miss">填空求□</button><button data-val="mix">兩種混合</button>
+          </div>
+          <p class="hint">填空題（例如 7 + □ = 12）只用在橫式題目。</p>
+        </div>
+        <div class="row checks">
+          <label><input type="checkbox" data-k="noCarry"> 加減法不進位、不借位（難度 3 以上適用）</label>
+          <label><input type="checkbox" data-k="remainder"> 除法有餘數（以「…」寫出餘數）</label>
+        </div>
+      </fieldset>
+
+      <fieldset id="bookSet" class="hide">
+        <legend>手冊設定</legend>
+        <div class="grid2 row">
+          <label><span class="lb">週數（冊數）</span><input class="inp" type="number" min="1" max="12" data-k="weeks" data-num></label>
+          <label><span class="lb">每週練習天數</span>
+            <select class="inp" data-k="days" data-num><option value="5">5 天</option><option value="6">6 天</option><option value="7">7 天</option></select></label>
+        </div>
+        <div class="row">
+          <label><span class="lb">開始日期（自動印上每天日期）</span><input class="inp" type="date" data-k="start"></label>
+          <p class="hint">留空就印成空白日期欄，讓長輩自己寫。</p>
+        </div>
+        <div class="row">
+          <span class="lb">難度安排</span>
+          <div class="seg" data-set="prog">
+            <button data-val="fixed">固定難度</button><button data-val="ramp">週內漸進</button><button data-val="weekly">每週升一級</button>
+          </div>
+          <p class="hint" id="proghint"></p>
+        </div>
+        <div class="row">
+          <span class="lb">每天的運算</span>
+          <div class="seg" data-set="dayOps">
+            <button data-val="mix">每天都混合</button><button data-val="rotate">每天輪流一種</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lb">手冊尺寸</span>
+          <div class="seg" data-set="bookSize">
+            <button data-val="a5">A5 對折小冊</button><button data-val="a4">A4 單頁</button>
+          </div>
+          <div class="tip" id="a5tip">A5 小冊請用 A4 橫向、雙面、短邊翻頁列印；印好後疊在一起對折，在中線釘兩針就是一本。</div>
+        </div>
+        <div class="row">
+          <label><span class="lb">手冊標題</span><input class="inp" type="text" data-k="titleBook" maxlength="12"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>列印設定</legend>
+        <div class="row">
+          <span class="lb">題目字體大小</span>
+          <div class="font-row">
+            <input type="range" min="16" max="40" step="1" data-k="font" data-num aria-label="題目字體大小">
+            <output id="fontOut"></output>
+          </div>
+          <div class="seg" data-set="font" data-num style="margin-top:8px">
+            <button data-val="18">一般</button><button data-val="24">大字</button><button data-val="30">特大字</button>
+          </div>
+        </div>
+        <div class="grid2 row">
+          <label><span class="lb">每頁題數</span>
+            <select class="inp" data-k="perPage">
+              <option value="auto">自動排滿</option><option value="4">4 題</option><option value="6">6 題</option><option value="8">8 題</option><option value="10">10 題</option><option value="12">12 題</option><option value="15">15 題</option><option value="20">20 題</option><option value="24">24 題</option><option value="30">30 題</option><option value="40">40 題</option><option value="50">50 題</option>
+            </select></label>
+          <label id="sheetsWrap"><span class="lb">列印張數</span><input class="inp" type="number" min="1" max="60" data-k="sheets" data-num></label>
+        </div>
+        <div class="row" id="titleSheetWrap">
+          <label><span class="lb">練習單標題</span><input class="inp" type="text" data-k="titleSheet" maxlength="14"></label>
+        </div>
+        <div class="grid2 row">
+          <label><span class="lb">姓名（可留空）</span><input class="inp" type="text" data-k="name" maxlength="10"></label>
+          <label><span class="lb">頁尾文字</span><input class="inp" type="text" data-k="footer" maxlength="24"></label>
+        </div>
+        <div class="row checks">
+          <label><input type="checkbox" data-k="answers"> 附上解答頁</label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="actions">
+      <button class="b-re" id="reBtn">換一批題目</button>
+      <button class="b-pr" id="printBtn">列印</button>
+      <button class="b-pdf" id="pdfBtn">下載 PDF</button>
+    </div>
+  </aside>
+
+  <section aria-label="預覽">
+    <div class="pvhead"><strong id="sumMain"></strong><span id="sumSub"></span><span id="sumWarn" class="warn"></span></div>
+    <div id="pages"></div>
+  </section>
+</main>
+
+<div id="print"></div>
+<div class="busy" id="busy"><div id="busyText">正在產生 PDF…</div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function nextMonday(){const d=new Date();const add=((8-d.getDay())%7)||7;d.setDate(d.getDate()+add);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+const S={mode:'book',ops:{'+':true,'−':true,'×':false,'÷':false},level:2,noCarry:false,remainder:false,format:'h',blank:'ans',
+  font:24,perPage:'auto',sheets:5,answers:true,titleSheet:'算術練習',titleBook:'動腦算術手冊',name:'',footer:'愛迪樂健康促進團隊',
+  weeks:1,days:5,start:nextMonday(),prog:'fixed',dayOps:'mix',bookSize:'a5'};
+let seed=(Date.now()%2147483647)|0;
+
+/* ---------- random ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let R=mulberry32(seed);
+const ri=(a,b)=>a+Math.floor(R()*(b-a+1));
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+
+/* ---------- problem generators ---------- */
+function noCarryAdd(a,b){while(a||b){if(a%10+b%10>9)return false;a=Math.floor(a/10);b=Math.floor(b/10)}return true}
+function noBorrow(a,b){while(b){if(a%10<b%10)return false;a=Math.floor(a/10);b=Math.floor(b/10)}return true}
+const GEN={
+  '+':L=>{let a,b;for(let t=0;t<300;t++){
+      if(L===1){a=ri(1,9);b=ri(1,10-a)}else if(L===2){a=ri(2,9);b=ri(2,9)}
+      else if(L===3){a=ri(10,99);b=ri(2,9)}else if(L===4){a=ri(10,99);b=ri(10,99)}else{a=ri(100,999);b=ri(10,999)}
+      if(S.noCarry&&L>=3&&!noCarryAdd(a,b))continue;break}
+    return{a,b,ans:a+b}},
+  '−':L=>{let a,b;for(let t=0;t<300;t++){
+      if(L===1){a=ri(2,10);b=ri(1,a-1)}else if(L===2){a=ri(11,18);b=ri(Math.max(2,a-9),9)}
+      else if(L===3){a=ri(10,99);b=ri(2,9)}else if(L===4){a=ri(20,99);b=ri(10,a-1)}else{a=ri(100,999);b=ri(10,a-1)}
+      if(S.noCarry&&L>=3&&!noBorrow(a,b))continue;break}
+    return{a,b,ans:a-b}},
+  '×':L=>{let a,b;
+    if(L===1){a=ri(2,5);b=ri(1,9)}else if(L===2){a=ri(2,9);b=ri(2,9)}
+    else if(L===3){a=ri(11,99);b=ri(2,9)}else if(L===4){a=ri(101,999);b=ri(2,9)}else{a=ri(11,99);b=ri(11,99)}
+    return{a,b,ans:a*b}},
+  '÷':L=>{let b,q,max;
+    if(L===1){b=ri(2,5);q=ri(1,9);max=99}else if(L===2){b=ri(2,9);q=ri(2,9);max=99}
+    else if(L===3){b=ri(2,9);q=ri(Math.max(2,Math.ceil(10/b)),Math.floor(99/b));max=99}
+    else if(L===4){b=ri(2,9);q=ri(Math.ceil(100/b),Math.floor(999/b));max=999}
+    else{b=ri(11,49);q=ri(Math.ceil(100/b),Math.floor(999/b));max=999}
+    let a=b*q,rem;
+    if(S.remainder){rem=ri(1,b-1);if(a+rem>max){q-=1;a=b*q}a+=rem;if(q<1){q=1;a=b+rem}}
+    return{a,b,ans:q,rem}}
+};
+function makeProblem(op,L,fmt,blank){
+  const p=GEN[op](L);p.op=op;p.L=L;
+  p.fmt=fmt==='mix'?(R()<.5?'h':'v'):fmt;
+  if(p.fmt==='h'&&!(op==='÷'&&p.rem!=null)){
+    p.blank=blank==='ans'?'ans':blank==='miss'?(R()<.5?'a':'b'):['ans','a','b'][ri(0,2)];
+  }else p.blank='ans';
+  if(p.fmt==='v'){
+    if(op==='÷'){p.work=L<=2?2:L===3?3:4}
+    else{p.ansRows=(op==='×'&&p.b>=10)?3:1;p.ncol=Math.max(String(p.a).length,String(p.b).length,String(p.ans).length)+1}
+  }
+  return p;
+}
+function genList(ops,L,n){
+  const seq=[];for(let i=0;i<n;i++)seq.push(ops[i%ops.length]);shuffle(seq);
+  const seen=new Set();
+  return seq.map(op=>{let p;for(let t=0;t<30;t++){p=makeProblem(op,L,S.format,S.blank);const k=op+p.a+'_'+p.b;if(!seen.has(k)){seen.add(k);break}}return p});
+}
+const ansStr=p=>p.blank==='a'?p.a:p.blank==='b'?p.b:(p.rem!=null?p.ans+' … '+p.rem:p.ans);
+
+/* ---------- sizing (em) ---------- */
+const numW=n=>String(n).length*.57;
+const boxW=n=>Math.max(1.9,String(n).length*.62+.7);
+/* 以實際排版量測每種題型的寬高（單位 em），結果快取 */
+const dimCache=new Map();let meas=null;
+function dims(p){
+  const key=[p.fmt,p.op,p.blank,String(p.a).length,String(p.b).length,String(p.ans).length,p.rem!=null?String(p.rem).length:'-',p.ansRows||0,p.work||0].join('|');
+  if(dimCache.has(key))return dimCache.get(key);
+  if(!meas){meas=document.createElement('div');meas.className='page';meas.style.cssText='position:absolute;left:-99999px;top:0;width:auto;height:auto;overflow:visible;visibility:hidden;font-size:100px;display:inline-block';document.body.appendChild(meas)}
+  meas.innerHTML=itemHTML(p,98);
+  const el=meas.firstChild,w=el.scrollWidth/100,h=el.offsetHeight/100;
+  const r=p.fmt==='h'?{w,h:Math.max(2.05,h+.85)}:{w,h:h+.35};
+  dimCache.set(key,r);return r;
+}
+const AREA={sheet:{w:515.3,h:653.9},'day-a5':{w:367.5,h:397.3},'day-a4':{w:515.3,h:623.9}};
+/* 依每題實際大小逐列排版：同一列取最寬與最高的題目決定欄數與列高，排到頁面滿為止 */
+const kindOf=p=>p.fmt+(p.fmt==='v'?(p.op==='÷'||p.ansRows===3?'T':'S'):(p.rem!=null?'R':''));
+/* 先抽樣估出每一類題型（橫式、直式、直式除法…）的最大寬高，讓同類題目在整頁對齊 */
+const kindCache=new Map();
+function kindSizes(ops,L){
+  const key=[ops.join(''),L,S.format,S.blank,S.noCarry,S.remainder].join('|');
+  if(kindCache.has(key))return kindCache.get(key);
+  const keep=R;R=mulberry32(9157);const m={};
+  for(const op of ops)for(let i=0;i<50;i++){const p=makeProblem(op,L,S.format,S.blank),d=dims(p),k=kindOf(p);
+    m[k]=m[k]||{w:0,h:0};m[k].w=Math.max(m[k].w,d.w);m[k].h=Math.max(m[k].h,d.h)}
+  R=keep;kindCache.set(key,m);return m;
+}
+function packPage(kind,ops,L){
+  const A=AREA[kind],F=S.font,want=S.perPage==='auto'?Infinity:+S.perPage,KS=kindSizes(ops,L);
+  const rows=[],seen=new Set(),queue=[];let bag=[],used=0,count=0;
+  const fresh=()=>{if(!bag.length)bag=shuffle(ops.slice());const op=bag.pop();let p;
+    for(let t=0;t<30;t++){p=makeProblem(op,L,S.format,S.blank);const k=op+p.a+'_'+p.b;if(!seen.has(k)){seen.add(k);break}}return p};
+  const sz=p=>{const k=kindOf(p),d=dims(p),m=KS[k]||d;return{w:(Math.max(m.w,d.w)+.4)*F,h:Math.max(m.h,d.h)*F}};
+  const take=ok=>{const i=queue.findIndex(ok);if(i>=0)return queue.splice(i,1)[0];
+    for(let t=0;t<6;t++){const p=fresh();if(ok(p))return p;if(queue.length<12)queue.push(p)}return null};
+  while(count<want){
+    const room=A.h-used;
+    const first=take(p=>rows.length===0||sz(p).h<=room);
+    if(!first)break;
+    const key=kindOf(first),f=sz(first),cols=Math.max(1,Math.floor(A.w/f.w)),row=[first];let rh=f.h;
+    while(count+row.length<want&&row.length<cols){
+      const p=take(q=>kindOf(q)===key&&sz(q).w<=A.w/cols+.01&&(rows.length===0||sz(q).h<=room));
+      if(!p)break;row.push(p);rh=Math.max(rh,sz(p).h);
+    }
+    rows.push({items:row,cols,h:rh});used+=rh;count+=row.length;
+    if(used>A.h-4)break;
+  }
+  return{rows,n:count,h:A.h,over:want!==Infinity&&count<want,probs:rows.flatMap(r=>r.items)};
+}
+
+/* ---------- problem HTML ---------- */
+const bx=n=>`<span class="bx" style="width:${boxW(n).toFixed(2)}em"></span>`;
+function hHTML(p){
+  const A=p.blank==='a'?bx(p.a):`<span>${p.a}</span>`,B=p.blank==='b'?bx(p.b):`<span>${p.b}</span>`,C=p.blank==='ans'?bx(p.ans):`<span>${p.ans}</span>`;
+  let s=`<span class="hz">${A}<span class="sy">${p.op}</span>${B}<span class="eq">=</span>${C}`;
+  if(p.rem!=null)s+=`<span class="eq">…</span>${bx(p.rem)}`;
+  return s+'</span>';
+}
+function cells(str,n){let h='';for(let i=0;i<n-str.length;i++)h+='<span class="c"></span>';for(const ch of str)h+=`<span class="c">${ch}</span>`;return h}
+const boxes=(n,g)=>`<span class="c bx2${g?' g':''}"></span>`.repeat(n);
+function vHTML(p){
+  const n=p.ncol;
+  let h=`<div class="vt"><div class="vr">${cells(String(p.a),n)}</div><div class="vr"><span class="c sy">${p.op}</span>${cells(String(p.b),n-1)}</div><div class="vl"></div>`;
+  if(p.ansRows===3)h+=`<div class="vr">${boxes(n,1)}</div><div class="vr">${boxes(n,1)}</div><div class="vl thin"></div>`;
+  return h+`<div class="vr">${boxes(n)}</div></div>`;
+}
+function vdHTML(p){
+  const sa=String(p.a),sb=String(p.b);
+  const r0='<span class="c"></span>'.repeat(sb.length)+'<span class="pr-sp"></span>'+boxes(sa.length);
+  const r1=cells(sb,sb.length)+'<span class="paren"></span><span class="dv">'+cells(sa,sa.length)+'</span>';
+  return `<div class="vt"><div class="vr">${r0}</div><div class="vr">${r1}</div><div style="height:${(p.work*1.28).toFixed(2)}em"></div></div>`;
+}
+const itemHTML=(p,i)=>`<div class="it ${p.fmt}"><span class="no">${i+1}</span>${p.fmt==='h'?hHTML(p):p.op==='÷'?vdHTML(p):vHTML(p)}</div>`;
+function gridHTML(pk){let k=0;
+  return `<div class="grid" style="font-size:${S.font}pt;height:${pk.h}pt">${pk.rows.map(r=>`<div class="grow" style="flex:1 1 ${r.h.toFixed(1)}pt;grid-template-columns:repeat(${r.cols},minmax(0,1fr))">${r.items.map(p=>itemHTML(p,k++)).join('')}</div>`).join('')}</div>`}
+const field=(label,val,w,suf)=>`<span class="fd"><b>${label}</b><i style="width:${w}em">${esc(val)}</i>${suf?`<b>${suf}</b>`:''}</span>`;
+const MARK=`<div class="mk"><i style="background:#E8552D">+</i><i style="background:#F4A93C">−</i><i style="background:#028090">×</i><i style="background:#12343B">÷</i></div>`;
+
+/* ---------- labels & dates ---------- */
+const OPN={'+':'加法','−':'減法','×':'乘法','÷':'除法'};
+const opsLabel=ops=>ops.length===1?OPN[ops[0]]:ops.map(o=>OPN[o][0]).join('')+'混合';
+const LV={
+  '+':['10 以內的加法','一位數加一位數','二位數加一位數','二位數加二位數','三位數加法'],
+  '−':['10 以內的減法','十幾減一位數','二位數減一位數','二位數減二位數','三位數減法'],
+  '×':['九九乘法 2～5','九九乘法 2～9','二位數乘一位數','三位數乘一位數','二位數乘二位數'],
+  '÷':['九九除法 2～5','九九除法 2～9','二位數除以一位數','三位數除以一位數','三位數除以二位數']};
+const WK='日一二三四五六';
+function dateOf(w,d){if(!S.start)return null;const[y,m,dd]=S.start.split('-').map(Number);if(!y)return null;return new Date(y,m-1,dd+w*7+d)}
+const fLong=t=>t?`${t.getMonth()+1}月${t.getDate()}日（${WK[t.getDay()]}）`:'＿月＿日（＿）';
+const fShort=t=>t?`${t.getMonth()+1}/${t.getDate()}（${WK[t.getDay()]}）`:'';
+function levelFor(w,d){const b=S.level;if(S.prog==='weekly')return Math.min(5,b+w);if(S.prog==='ramp')return d>=Math.ceil(S.days/2)?Math.min(5,b+1):b;return b}
+
+/* ---------- pages: single sheets ---------- */
+function sheetPage(i,N,pk){const probs=pk.probs;
+  return `<div class="page a4 sheet">
+  <header class="sh-h"><div class="sh-top"><h1>${esc(S.titleSheet)}</h1>${MARK}</div>
+  <div class="sh-f">${field('姓名',S.name,6.5)}${field('日期','',5.5)}${field('用時','',2.6,'分')}${field('答對','',2.4,'/ '+probs.length)}</div></header>
+  ${gridHTML(pk)}
+  <footer class="pf"><span>第 ${i+1} 張，共 ${N} 張</span><span>${esc(S.footer)}</span></footer></div>`;
+}
+function answerPages(blocks,size,title,startNo){
+  const cols=size==='a5'?4:6,avail=size==='a5'?(595.3-48-62-30):(841.9-68-62-30);
+  const pages=[];let cur=[],used=0;
+  for(const b of blocks){const hgt=26+Math.ceil(b.probs.length/cols)*18+10;if(used+hgt>avail&&cur.length){pages.push(cur);cur=[];used=0}cur.push(b);used+=hgt}
+  if(cur.length)pages.push(cur);
+  return pages.map((pg,i)=>`<div class="page ${size} book ans"><h2>${esc(title)}</h2><div class="sub">給陪伴者核對使用</div>
+    ${pg.map(b=>`<div class="ablk"><h4>${b.title}</h4><div class="agrid" style="grid-template-columns:repeat(${cols},1fr)">${b.probs.map((p,k)=>`<span><em>${k+1}</em>${ansStr(p)}</span>`).join('')}</div></div>`).join('')}
+    ${startNo!=null?`<div class="pno">${startNo+i}</div>`:''}</div>`);
+}
+function buildSheet(ops){
+  const N=S.sheets,packs=[];
+  for(let i=0;i<N;i++)packs.push(packPage('sheet',ops,S.level));
+  const sheets=packs.map(p=>p.probs),ns=[...new Set(packs.map(p=>p.n))],over=packs.some(p=>p.over);
+  const pages=packs.map((pk,i)=>({html:sheetPage(i,N,pk),cap:`第 ${i+1} 張`,kind:'a4'}));
+  let ap=[];
+  if(S.answers)ap=answerPages(sheets.map((pr,i)=>({title:`第 ${i+1} 張`,probs:pr})),'a4',S.titleSheet+' 解答',null).map(h=>({html:h,cap:'解答',kind:'a4'}));
+  const all=pages.concat(ap);
+  return{preview:all,print:all.map(p=>p.html),landscape:false,
+    main:`${N} 張練習單，每張 ${ns.length>1?Math.min(...ns)+'～'+Math.max(...ns):ns[0]} 題`,
+    sub:`共 ${all.length} 頁 A4${ap.length?`（含解答 ${ap.length} 頁）`:''}`,
+    warn:over?`字體 ${S.font}pt 時一頁排不下 ${S.perPage} 題，已依版面自動減少`:''};
+}
+
+/* ---------- pages: booklet ---------- */
+function coverPage(w,days,size){
+  const d0=days[0].date,d1=days[days.length-1].date;
+  const period=d0?`${d0.getMonth()+1}/${d0.getDate()} ～ ${d1.getMonth()+1}/${d1.getDate()}`:'';
+  return `<div class="page ${size} book cover">
+   <div class="s s1"><span>+</span></div><div class="s s2"><span>−</span></div><div class="s s3"><span>×</span></div><div class="s s4"><span>÷</span></div><div class="s s5"></div>
+   <div class="cv-main"><span class="cv-week">第 ${w+1} 週</span><div class="cv-title">${esc(S.titleBook)}</div><div class="cv-sub">每天一頁，算一算、動動腦</div></div>
+   <div class="cv-fields">${field('姓名',S.name,0)}${field('期間',period,0)}</div>
+   <div class="cv-foot">${esc(S.footer)}</div></div>`;
+}
+function guidePage(size,pno){
+  return `<div class="page ${size} book"><div class="inner">
+   <div class="bt">這本手冊怎麼用</div><div class="bt-bar"></div>
+   <ol class="steps">
+    <li>每天做一頁，大約 10～15 分鐘就好。</li>
+    <li>開始前寫下時間，做完再寫結束時間。</li>
+    <li>一邊算，一邊小聲把題目唸出來。</li>
+    <li>不必急，也不怕錯，算得順最重要。</li>
+    <li>做完請家人一起對答案，說一句鼓勵的話。</li>
+    <li>在頁尾勾選今天的感覺，作為調整難度的參考。</li>
+   </ol>
+   <div class="about"><h3>關於學習療法</h3><p>學習療法是日本東北大學川島隆太教授團隊發展的方法，以朗讀和簡單計算為主要內容，強調每天短時間、規律地練習，並由陪伴者在旁互動與鼓勵。本手冊參考這樣的精神設計，讓長輩在家也能持續動腦。</p></div>
+  </div><div class="pno">${pno}</div></div>`;
+}
+function recordPage(w,days,size,pno){
+  const rows=days.map((d,i)=>`<tr><td>${i+1}</td><td>${fShort(d.date)}</td><td class="l">${d.label}</td><td>${4+i}</td><td><span class="box"></span></td><td></td><td></td></tr>`).join('');
+  return `<div class="page ${size} book"><div class="inner">
+   <div class="bt">本週練習紀錄</div><div class="bt-bar"></div>
+   <div class="meta">${field('姓名',S.name,6)}<span>第 ${w+1} 週</span></div>
+   <table class="rec"><thead><tr><th>天</th><th>日期</th><th>練習內容</th><th>頁</th><th>完成</th><th>用時(分)</th><th>答對</th></tr></thead><tbody>${rows}</tbody></table>
+   <p class="rnote">完成一天就在「完成」打勾。一週下來看看用時與答對題數，就能看見自己的進步。</p>
+  </div><div class="pno">${pno}</div></div>`;
+}
+function dayPage(w,d,dy,size,pno){
+  return `<div class="page ${size} day">
+   <header class="dh">
+    <div class="dh-top"><span class="dwk">第 ${w+1} 週</span><span class="dnum">第 ${d+1} 天</span><span class="ddate">${fLong(dy.date)}</span><span class="dop">${dy.label}</span></div>
+    <div class="dh-rec">${field('開始','',3.4)}${field('結束','',3.4)}${field('答對','',2.2,'/ '+dy.probs.length+' 題')}</div>
+   </header>
+   ${gridHTML(dy.pk)}
+   <footer class="df">
+    <div class="feel"><b>今天覺得</b><span><i class="ck"></i>很輕鬆</span><span><i class="ck"></i>剛剛好</span><span><i class="ck"></i>有點難</span></div>
+    <div class="df-b">${field('陪伴者簽名','',6)}<span class="pg">${pno}</span></div>
+   </footer></div>`;
+}
+const notePage=(size,pno)=>`<div class="page ${size} book"><div class="inner"><div class="bt">隨手記</div><div class="bt-bar"></div><div class="lines">${'<div></div>'.repeat(17)}</div></div><div class="pno">${pno}</div></div>`;
+const backPage=size=>`<div class="page ${size} book back"><div class="inner">
+  <div class="badge">完成<br>一週</div><h2>這一週，辛苦了！</h2><p class="lead">每天一點點，持續就是進步。</p>
+  <div class="msg"><b>陪伴者的話</b><div class="lines">${'<div></div>'.repeat(5)}</div></div></div>
+  <div class="cv-foot">${esc(S.footer)}</div></div>`;
+
+function buildBook(ops){
+  const size=S.bookSize,kind=size==='a5'?'day-a5':'day-a4';
+  const preview=[],print=[];let over=null,perBook=0,qPerDay=new Set();
+  for(let w=0;w<S.weeks;w++){
+    const days=[];
+    for(let d=0;d<S.days;d++){
+      const L=levelFor(w,d);
+      const dops=S.dayOps==='rotate'&&ops.length>1?[ops[d%ops.length]]:ops;
+      const pk=packPage(kind,dops,L);if(pk.over)over=1;
+      days.push({L,pk,date:dateOf(w,d),probs:pk.probs,label:`${opsLabel(dops)} 難度${L}`});
+      qPerDay.add(pk.n);
+    }
+    const P=[];
+    P.push({f:()=>coverPage(w,days,size),cap:`第 ${w+1} 週　封面`});
+    P.push({f:n=>guidePage(size,n),cap:'使用說明'});
+    P.push({f:n=>recordPage(w,days,size,n),cap:'本週練習紀錄'});
+    days.forEach((dy,d)=>P.push({f:n=>dayPage(w,d,dy,size,n),cap:`第 ${d+1} 天`}));
+    if(S.answers){
+      const start=P.length+1;
+      answerPages(days.map((dy,d)=>({title:`第 ${d+1} 天（${fShort(dy.date)||opsLabel([])}）`.replace('（）',''),probs:dy.probs})),size,'解答',start)
+        .forEach(h=>P.push({f:()=>h,cap:'解答'}));
+    }
+    if(size==='a5')while((P.length+1)%4)P.push({f:n=>notePage(size,n),cap:'隨手記'});
+    P.push({f:()=>backPage(size),cap:'封底'});
+    const html=P.map((p,i)=>p.f(i+1));
+    perBook=html.length;
+    html.forEach((h,i)=>preview.push({html:h,cap:P[i].cap,kind:size}));
+    if(size==='a5'){
+      const n=html.length;
+      for(let s=0;s<n/4;s++){
+        print.push(`<div class="sheet-l">${html[n-1-2*s]}${html[2*s]}</div>`);
+        print.push(`<div class="sheet-l">${html[2*s+1]}${html[n-2-2*s]}</div>`);
+      }
+    }else print.push(...html);
+  }
+  const q=[...qPerDay];
+  return{preview,print,landscape:size==='a5',
+    main:`${S.weeks} 冊動腦手冊，每冊 ${S.days} 天`,
+    sub:size==='a5'?`每冊 ${perBook} 頁 A5，用 ${perBook/4} 張 A4 雙面列印；每天 ${q.length>1?Math.min(...q)+'～'+Math.max(...q):q[0]} 題`
+                   :`每冊 ${perBook} 頁 A4；每天 ${q.length>1?Math.min(...q)+'～'+Math.max(...q):q[0]} 題`,
+    warn:over!=null?`目前字體下一頁排不下 ${S.perPage} 題，已依版面自動減少`:''};
+}
+
+/* ---------- render ---------- */
+let built=null;
+function render(){
+  const ops=Object.keys(S.ops).filter(k=>S.ops[k]);
+  R=mulberry32(seed);
+  built=S.mode==='sheet'?buildSheet(ops):buildBook(ops);
+  $('#pages').innerHTML=built.preview.map(p=>`<figure><figcaption>${p.cap}</figcaption><div class="pv ${p.kind}">${p.html}</div></figure>`).join('');
+  $('#print').innerHTML=built.print.map(h=>`<div class="pp">${h}</div>`).join('');
+  $('#pagesize').textContent=`@page{size:A4 ${built.landscape?'landscape':'portrait'};margin:0}`;
+  $('#sumMain').textContent=built.main;$('#sumSub').textContent=built.sub;$('#sumWarn').textContent=built.warn;
+  scalePreview();
+}
+function scalePreview(){
+  const box=$('#pages');const avail=Math.max(240,box.clientWidth);
+  const w4=Math.min(avail,avail>1100?(avail-22)/2:avail,560),w5=Math.min(avail,avail>760?(avail-44)/3:avail>480?(avail-22)/2:avail,400);
+  box.style.setProperty('--s4',(w4/793.7).toFixed(4));box.style.setProperty('--s5',(w5/559.4).toFixed(4));
+}
+
+/* ---------- UI sync ---------- */
+function syncUI(){
+  $$('.mode button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===S.mode)));
+  $$('#ops button').forEach(b=>b.setAttribute('aria-pressed',String(!!S.ops[b.dataset.op])));
+  $$('.seg[data-set]').forEach(g=>{const k=g.dataset.set;g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(String(S[k])===b.dataset.val)))});
+  $$('[data-k]').forEach(el=>{const v=S[el.dataset.k];if(el.type==='checkbox')el.checked=!!v;else if(document.activeElement!==el)el.value=v});
+  $('#fontOut').textContent=S.font+' pt';
+  const book=S.mode==='book';
+  $('#bookSet').classList.toggle('hide',!book);$('#sheetsWrap').classList.toggle('hide',book);$('#titleSheetWrap').classList.toggle('hide',book);
+  $('#a5tip').classList.toggle('hide',S.bookSize!=='a5');
+  $('#proghint').textContent={fixed:'每天都用上面選的難度。',ramp:'每週前幾天用設定難度，後幾天提高一級。',weekly:'第 1 週用設定難度，之後每週提高一級（最高 5）。'}[S.prog];
+  const ops=Object.keys(S.ops).filter(k=>S.ops[k]);
+  const keep=R;R=mulberry32(7);
+  $('#lvdesc').innerHTML=ops.map(o=>{const p=GEN[o](S.level);return `<li><b>${OPN[o]}</b>${LV[o][S.level-1]}<code>${p.a} ${o} ${p.b}</code></li>`}).join('');
+  R=keep;
+}
+let tmr;function update(){syncUI();clearTimeout(tmr);tmr=setTimeout(render,120)}
+
+$$('.mode button').forEach(b=>b.addEventListener('click',()=>{S.mode=b.dataset.mode;update()}));
+$$('#ops button').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.op;const on=Object.values(S.ops).filter(Boolean).length;
+  if(S.ops[k]&&on===1){toast('至少保留一種運算');return}
+  S.ops[k]=!S.ops[k];update();
+}));
+$$('.seg[data-set]').forEach(g=>g.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  S[g.dataset.set]=g.hasAttribute('data-num')?+b.dataset.val:b.dataset.val;update();
+}));
+$$('[data-k]').forEach(el=>{
+  const ev=el.type==='checkbox'||el.tagName==='SELECT'||el.type==='date'?'change':'input';
+  el.addEventListener(ev,()=>{
+    const k=el.dataset.k;let v=el.type==='checkbox'?el.checked:el.value;
+    if(el.hasAttribute('data-num')){v=+v;if(!v&&v!==0)return;
+      if(k==='weeks')v=Math.min(12,Math.max(1,v));if(k==='sheets')v=Math.min(60,Math.max(1,v));}
+    S[k]=v;update();
+  });
+});
+$('#reBtn').addEventListener('click',()=>{seed=(seed*16807+11)%2147483647;render();toast('已換一批新題目')});
+$('#printBtn').addEventListener('click',()=>{try{window.print()}catch(e){toast('這個畫面無法直接列印，請改用「下載 PDF」')}});
+window.addEventListener('resize',()=>{clearTimeout(window.__rs);window.__rs=setTimeout(scalePreview,100)});
+
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
+
+/* ---------- PDF ---------- */
+const dlP=(window.claude&&typeof window.claude.use==='function')?window.claude.use('downloads').catch(()=>null):Promise.resolve(null);
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
+async function libs(){
+  if(!window.html2canvas)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+$('#pdfBtn').addEventListener('click',async()=>{
+  const btn=$('#pdfBtn'),busy=$('#busy'),bt=$('#busyText'),box=$('#print');
+  btn.disabled=true;busy.classList.add('on');bt.textContent='正在準備…';
+  try{
+    await libs();if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    const sy=window.scrollY;window.scrollTo(0,0);box.classList.add('exp');
+    const items=[...box.querySelectorAll('.pp > *')],land=built.landscape;
+    const doc=new window.jspdf.jsPDF({orientation:land?'landscape':'portrait',unit:'mm',format:'a4',compress:true});
+    for(let i=0;i<items.length;i++){
+      bt.textContent=`正在產生 PDF（${i+1} / ${items.length}）`;
+      const cv=await window.html2canvas(items[i],{scale:2,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:1400});
+      if(i)doc.addPage('a4',land?'landscape':'portrait');
+      doc.addImage(cv.toDataURL('image/jpeg',.9),'JPEG',0,0,land?297:210,land?210:297,undefined,'FAST');
+    }
+    box.classList.remove('exp');window.scrollTo(0,sy);busy.classList.remove('on');
+    const name=(S.mode==='sheet'?S.titleSheet:S.titleBook)+'.pdf';
+    const blob=doc.output('blob');
+    const dl=await dlP;
+    if(dl){try{await dl.save({filename:name,data:blob});toast('PDF 已下載')}catch(e){if(e&&e.code!=='declined')toast('下載沒有完成，請再試一次')}}
+    else{doc.save(name);toast('PDF 已下載')}
+  }catch(e){toast('PDF 產生失敗，請改用「列印」另存成 PDF')}
+  finally{box.classList.remove('exp');busy.classList.remove('on');btn.disabled=false}
+});
+
+syncUI();render();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{dimCache.clear();kindCache.clear();render()});
+})();
+</script>
+</body>
+</html>
